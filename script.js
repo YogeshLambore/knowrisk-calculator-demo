@@ -4,10 +4,11 @@
  */
 
 class Calculator {
-  constructor(previousOperandElement, currentOperandElement) {
+  constructor(previousOperandElement = null, currentOperandElement = null) {
     this.previousOperandElement = previousOperandElement;
     this.currentOperandElement = currentOperandElement;
     this.MAX_DIGITS = 14;
+    this.VALID_OPERATORS = ['+', '-', '−', '×', '*', '÷', '/'];
     this.clear();
   }
 
@@ -38,6 +39,11 @@ class Calculator {
   }
 
   appendNumber(number) {
+    if (number == null) return;
+    const numberStr = number.toString();
+    // Validate single character input: digit or decimal point
+    if (!/^[0-9.]$/.test(numberStr)) return;
+
     if (this.isErrorState) {
       this.clear();
     }
@@ -47,7 +53,7 @@ class Calculator {
     }
 
     // Decimal validation: prevent duplicate decimal points
-    if (number === '.') {
+    if (numberStr === '.') {
       if (this.currentOperand.includes('.')) return;
       if (this.currentOperand === '' || this.currentOperand === '0') {
         this.currentOperand = '0.';
@@ -55,19 +61,30 @@ class Calculator {
       }
     }
 
+    // Prevent redundant leading zeros
+    if (this.currentOperand === '0' && numberStr === '0') {
+      return;
+    }
+
     // Prevent number overflow exceeding display bounds
     const cleanLength = this.currentOperand.replace(/[-.]/g, '').length;
     if (cleanLength >= this.MAX_DIGITS) return;
 
-    if (this.currentOperand === '0' && number !== '.') {
-      this.currentOperand = number.toString();
+    if (this.currentOperand === '0' && numberStr !== '.') {
+      this.currentOperand = numberStr;
     } else {
-      this.currentOperand = this.currentOperand.toString() + number.toString();
+      this.currentOperand = this.currentOperand.toString() + numberStr;
     }
   }
 
   chooseOperation(operation) {
-    if (this.isErrorState) return;
+    if (this.isErrorState || !operation) return;
+    if (!this.VALID_OPERATORS.includes(operation)) return;
+
+    // Normalize trailing decimal if present
+    if (this.currentOperand.endsWith('.')) {
+      this.currentOperand = this.currentOperand.slice(0, -1);
+    }
 
     // Allow switching operator if user hasn't typed next operand yet
     if (this.shouldResetScreen && this.previousOperand !== '') {
@@ -90,12 +107,24 @@ class Calculator {
   compute() {
     if (this.isErrorState || !this.operation || this.previousOperand === '') return;
 
-    let computation;
+    // Normalize trailing decimal if present
+    if (this.currentOperand.endsWith('.')) {
+      this.currentOperand = this.currentOperand.slice(0, -1);
+    }
+
     const prev = parseFloat(this.previousOperand);
     const current = parseFloat(this.currentOperand);
 
-    if (isNaN(prev) || isNaN(current)) return;
+    if (isNaN(prev) || isNaN(current)) {
+      this.currentOperand = 'Invalid input';
+      this.previousOperand = '';
+      this.operation = undefined;
+      this.isErrorState = true;
+      this.shouldResetScreen = true;
+      return;
+    }
 
+    let computation;
     switch (this.operation) {
       case '+':
         computation = prev + current;
@@ -122,7 +151,22 @@ class Calculator {
         computation = prev / current;
         break;
       default:
+        this.currentOperand = 'Error';
+        this.previousOperand = '';
+        this.operation = undefined;
+        this.isErrorState = true;
+        this.shouldResetScreen = true;
         return;
+    }
+
+    // Guard against non-finite results (overflow or invalid computation)
+    if (!isFinite(computation) || isNaN(computation)) {
+      this.currentOperand = 'Overflow error';
+      this.previousOperand = '';
+      this.operation = undefined;
+      this.isErrorState = true;
+      this.shouldResetScreen = true;
+      return;
     }
 
     // Correct floating point precision issues (e.g. 0.1 + 0.2 = 0.3)
@@ -138,7 +182,15 @@ class Calculator {
     if (this.isErrorState) return;
     const current = parseFloat(this.currentOperand);
     if (isNaN(current)) return;
-    this.currentOperand = this.formatPrecision(current / 100).toString();
+    const result = this.formatPrecision(current / 100);
+    if (!isFinite(result)) {
+      this.currentOperand = 'Overflow error';
+      this.isErrorState = true;
+      this.shouldResetScreen = true;
+      return;
+    }
+    this.currentOperand = result.toString();
+    this.shouldResetScreen = true;
   }
 
   formatPrecision(num) {
@@ -152,6 +204,7 @@ class Calculator {
     if (!numberStr) return '';
 
     const stringNumber = numberStr.toString();
+    const isNegative = stringNumber.startsWith('-');
     const [integerDigits, decimalDigits] = stringNumber.split('.');
     const parsedInteger = parseFloat(integerDigits);
 
@@ -160,6 +213,9 @@ class Calculator {
       integerDisplay = '';
     } else {
       integerDisplay = parsedInteger.toLocaleString('en', { maximumFractionDigits: 0 });
+      if (isNegative && !integerDisplay.startsWith('-')) {
+        integerDisplay = `-${integerDisplay}`;
+      }
     }
 
     if (decimalDigits != null) {
@@ -170,6 +226,8 @@ class Calculator {
   }
 
   updateDisplay() {
+    if (!this.currentOperandElement || !this.previousOperandElement) return;
+
     if (this.isErrorState) {
       this.currentOperandElement.innerText = this.currentOperand;
       this.currentOperandElement.style.fontSize = '1.35rem';
