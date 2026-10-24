@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A clean, responsive calculator web application built with vanilla HTML, CSS, and JavaScript.">
+  <title>Calculator Demo | KnowRisk</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="calculator-wrapper">
+    <div class="calculator-card" role="region" aria-label="Calculator">
+      <!-- Calculator Header -->
+      <header class="calculator-header">
+        <h1 class="calculator-title">Calculator</h1>
+        <span class="badge">KnowRisk Demo</span>
+      </header>
+
+      <!-- Calculator Display Screen -->
+      <section class="display-container" aria-live="polite">
+        <div class="previous-operand" id="previousOperand" aria-label="Previous calculation"></div>
+        <div class="current-operand" id="currentOperand" aria-label="Current value">0</div>
+      </section>
+
+      <!-- Calculator Keypad Grid -->
+      <section class="keypad-grid" role="group" aria-label="Calculator keypad">
+        <!-- Row 1: Actions -->
+        <button type="button" class="btn btn-action" data-action="clear" aria-label="Clear all (C)">C</button>
+        <button type="button" class="btn btn-action" data-action="delete" aria-label="Delete last digit (Backspace)">DEL</button>
+        <button type="button" class="btn btn-action" data-action="percent" aria-label="Percentage (%)">%</button>
+        <button type="button" class="btn btn-operator" data-action="divide" data-operator="÷" aria-label="Divide (÷)">÷</button>
+
+        <!-- Row 2: 7, 8, 9, Multiply -->
+        <button type="button" class="btn btn-number" data-number="7">7</button>
+        <button type="button" class="btn btn-number" data-number="8">8</button>
+        <button type="button" class="btn btn-number" data-number="9">9</button>
+        <button type="button" class="btn btn-operator" data-action="multiply" data-operator="×" aria-label="Multiply (×)">×</button>
+
+        <!-- Row 3: 4, 5, 6, Subtract -->
+        <button type="button" class="btn btn-number" data-number="4">4</button>
+        <button type="button" class="btn btn-number" data-number="5">5</button>
+        <button type="button" class="btn btn-number" data-number="6">6</button>
+        <button type="button" class="btn btn-operator" data-action="subtract" data-operator="-" aria-label="Subtract (-)">−</button>
+
+        <!-- Row 4: 1, 2, 3, Add -->
+        <button type="button" class="btn btn-number" data-number="1">1</button>
+        <button type="button" class="btn btn-number" data-number="2">2</button>
+        <button type="button" class="btn btn-number" data-number="3">3</button>
+        <button type="button" class="btn btn-operator" data-action="add" data-operator="+" aria-label="Add (+)">+</button>
+
+        <!-- Row 5: 0, Decimal, Equals -->
+        <button type="button" class="btn btn-number btn-zero" data-number="0">0</button>
+        <button type="button" class="btn btn-number" data-action="decimal" aria-label="Decimal point (.)">.</button>
+        <button type="button" class="btn btn-equals" data-action="calculate" aria-label="Equals (=)">=</button>
+      </section>
+
+      <!-- Footer Info -->
+      <footer class="calculator-footer">
+        <small>Keyboard enabled &bull; Clean Vanilla Stack</small>
+      </footer>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
