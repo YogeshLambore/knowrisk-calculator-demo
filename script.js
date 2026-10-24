@@ -246,6 +246,7 @@ class Calculator {
 
 // Visual button flash for keyboard accessibility
 function flashButton(selector) {
+  if (typeof document === 'undefined') return;
   const btn = document.querySelector(selector);
   if (btn) {
     btn.classList.add('is-pressed');
@@ -253,101 +254,112 @@ function flashButton(selector) {
   }
 }
 
-// Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
-  const previousOperandElement = document.getElementById('previousOperand');
-  const currentOperandElement = document.getElementById('currentOperand');
-  const calculator = new Calculator(previousOperandElement, currentOperandElement);
+// Initialize on DOM ready (in browser environment)
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const previousOperandElement = document.getElementById('previousOperand');
+    const currentOperandElement = document.getElementById('currentOperand');
+    const calculator = new Calculator(previousOperandElement, currentOperandElement);
 
-  // Keypad click handlers
-  const keypad = document.querySelector('.keypad-grid');
-  keypad.addEventListener('click', (event) => {
-    const target = event.target.closest('button');
-    if (!target) return;
+    // Keypad click handlers
+    const keypad = document.querySelector('.keypad-grid');
+    if (keypad) {
+      keypad.addEventListener('click', (event) => {
+        const target = event.target.closest('button');
+        if (!target) return;
 
-    if (target.dataset.number) {
-      calculator.appendNumber(target.dataset.number);
-      calculator.updateDisplay();
-      return;
+        if (target.dataset.number) {
+          calculator.appendNumber(target.dataset.number);
+          calculator.updateDisplay();
+          return;
+        }
+
+        if (target.dataset.operator) {
+          calculator.chooseOperation(target.dataset.operator);
+          calculator.updateDisplay();
+          return;
+        }
+
+        const action = target.dataset.action;
+        switch (action) {
+          case 'clear':
+            calculator.clear();
+            calculator.updateDisplay();
+            break;
+          case 'delete':
+            calculator.delete();
+            calculator.updateDisplay();
+            break;
+          case 'decimal':
+            calculator.appendNumber('.');
+            calculator.updateDisplay();
+            break;
+          case 'percent':
+            calculator.applyPercent();
+            calculator.updateDisplay();
+            break;
+          case 'calculate':
+            calculator.compute();
+            calculator.updateDisplay();
+            break;
+        }
+      });
     }
 
-    if (target.dataset.operator) {
-      calculator.chooseOperation(target.dataset.operator);
-      calculator.updateDisplay();
-      return;
-    }
+    // Physical Keyboard Support
+    if (typeof window !== 'undefined') {
+      window.addEventListener('keydown', (event) => {
+        const key = event.key;
 
-    const action = target.dataset.action;
-    switch (action) {
-      case 'clear':
-        calculator.clear();
-        calculator.updateDisplay();
-        break;
-      case 'delete':
-        calculator.delete();
-        calculator.updateDisplay();
-        break;
-      case 'decimal':
-        calculator.appendNumber('.');
-        calculator.updateDisplay();
-        break;
-      case 'percent':
-        calculator.applyPercent();
-        calculator.updateDisplay();
-        break;
-      case 'calculate':
-        calculator.compute();
-        calculator.updateDisplay();
-        break;
+        if (!isNaN(key) && key !== ' ') {
+          calculator.appendNumber(key);
+          calculator.updateDisplay();
+          flashButton(`button[data-number="${key}"]`);
+        } else if (key === '.') {
+          calculator.appendNumber('.');
+          calculator.updateDisplay();
+          flashButton('button[data-action="decimal"]');
+        } else if (key === '+') {
+          calculator.chooseOperation('+');
+          calculator.updateDisplay();
+          flashButton('button[data-action="add"]');
+        } else if (key === '-') {
+          calculator.chooseOperation('-');
+          calculator.updateDisplay();
+          flashButton('button[data-action="subtract"]');
+        } else if (key === '*') {
+          calculator.chooseOperation('×');
+          calculator.updateDisplay();
+          flashButton('button[data-action="multiply"]');
+        } else if (key === '/') {
+          event.preventDefault(); // Prevent browser search quick-find
+          calculator.chooseOperation('÷');
+          calculator.updateDisplay();
+          flashButton('button[data-action="divide"]');
+        } else if (key === 'Enter' || key === '=') {
+          event.preventDefault();
+          calculator.compute();
+          calculator.updateDisplay();
+          flashButton('button[data-action="calculate"]');
+        } else if (key === 'Backspace') {
+          calculator.delete();
+          calculator.updateDisplay();
+          flashButton('button[data-action="delete"]');
+        } else if (key === 'Escape') {
+          calculator.clear();
+          calculator.updateDisplay();
+          flashButton('button[data-action="clear"]');
+        } else if (key === '%') {
+          calculator.applyPercent();
+          calculator.updateDisplay();
+          flashButton('button[data-action="percent"]');
+        }
+      });
     }
   });
+}
 
-  // Physical Keyboard Support
-  window.addEventListener('keydown', (event) => {
-    const key = event.key;
-
-    if (!isNaN(key) && key !== ' ') {
-      calculator.appendNumber(key);
-      calculator.updateDisplay();
-      flashButton(`button[data-number="${key}"]`);
-    } else if (key === '.') {
-      calculator.appendNumber('.');
-      calculator.updateDisplay();
-      flashButton('button[data-action="decimal"]');
-    } else if (key === '+') {
-      calculator.chooseOperation('+');
-      calculator.updateDisplay();
-      flashButton('button[data-action="add"]');
-    } else if (key === '-') {
-      calculator.chooseOperation('-');
-      calculator.updateDisplay();
-      flashButton('button[data-action="subtract"]');
-    } else if (key === '*') {
-      calculator.chooseOperation('×');
-      calculator.updateDisplay();
-      flashButton('button[data-action="multiply"]');
-    } else if (key === '/') {
-      event.preventDefault(); // Prevent browser search quick-find
-      calculator.chooseOperation('÷');
-      calculator.updateDisplay();
-      flashButton('button[data-action="divide"]');
-    } else if (key === 'Enter' || key === '=') {
-      event.preventDefault();
-      calculator.compute();
-      calculator.updateDisplay();
-      flashButton('button[data-action="calculate"]');
-    } else if (key === 'Backspace') {
-      calculator.delete();
-      calculator.updateDisplay();
-      flashButton('button[data-action="delete"]');
-    } else if (key === 'Escape') {
-      calculator.clear();
-      calculator.updateDisplay();
-      flashButton('button[data-action="clear"]');
-    } else if (key === '%') {
-      calculator.applyPercent();
-      calculator.updateDisplay();
-      flashButton('button[data-action="percent"]');
-    }
-  });
-});
+// Export for Node.js test environment
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = Calculator;
+}

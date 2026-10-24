@@ -67,7 +67,19 @@ No build tools, bundlers, or package managers are required.
 
 ---
 
-## Integration Context for KnowRisk
+## Running Automated Tests
+
+A lightweight automated test suite is included in `test.js` covering core arithmetic, decimal precision normalization, division-by-zero protection, and input validation without requiring third-party testing dependencies.
+
+To execute the tests using Node.js:
+
+```bash
+node test.js
+```
+
+All 20 test cases will execute and output a summary report.
+
+---
 
 This repository was specifically constructed with authentic sequential Git commits to facilitate testing KnowRisk's GitHub integration modules, including:
 - Repository metadata ingestion (name, description, visibility, default branch).
