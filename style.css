@@ -162,8 +162,10 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-.btn:active {
+.btn:active,
+.btn.is-pressed {
   transform: scale(0.96);
+  filter: brightness(1.2);
 }
 
 .btn:focus-visible {

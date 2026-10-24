@@ -1,26 +1,49 @@
 # KnowRisk Calculator Demo
 
-A lightweight, modern calculator web application designed to perform standard mathematical operations with an intuitive user interface and keyboard support.
+A lightweight, modern, and accessible calculator web application designed to perform standard mathematical operations with an intuitive user interface and keyboard support.
 
-> **Project Purpose:** This repository serves as a demonstration and testing project for **KnowRisk** — specifically validating GitHub repository metadata retrieval, commit history analysis, and commit-level integrations through the GitHub REST API.
+> **Project Purpose:** This repository serves as a real-world demonstration and verification project for **KnowRisk** — specifically validating GitHub repository metadata ingestion, commit history timeline analysis, and commit-level change tracking via the GitHub REST API.
 
 ---
 
 ## Features
 
 - **Core Mathematical Operations:** Addition (`+`), subtraction (`-`), multiplication (`×`), and division (`÷`).
-- **Precision & Edge Case Handling:** Safe division-by-zero protection, accurate floating-point rounding, and prevention of consecutive decimal points or invalid expressions.
-- **Dual Display:** Secondary display for tracking prior operands and operators alongside the active number.
-- **Responsive Dark Mode UI:** Centered glassmorphic card design optimized across mobile, tablet, and desktop screens.
-- **Full Keyboard Support:** Direct input via physical number keys, standard numpad, operator keys, Enter (`=`), Escape (`Clear`), and Backspace (`Delete`).
+- **Input Validation & Safety:**
+  - Prevents duplicate decimal points within a single operand.
+  - Graceful division-by-zero protection (displays friendly `"Cannot divide by zero"` notice).
+  - Floating-point precision normalization (resolving standard IEEE 754 precision artifacts such as `0.1 + 0.2 = 0.3`).
+  - Digit length constraints to prevent UI overflow on mobile displays.
+  - Seamless operator switching before entering secondary operands.
+- **Dual Display:** Secondary display tracks prior operands and operations while active values remain prominent.
+- **Localized Number Formatting:** Thousands separators automatically applied for readability.
+- **Responsive Dark Theme UI:** Centered glassmorphic card design optimized for mobile, tablet, and desktop viewports.
+- **Physical Keyboard Support:** Direct input via physical number keys, standard numpad, operator keys, Enter (`=`), Escape (`Clear`), and Backspace (`Delete`), complete with interactive button flash feedback.
+
+---
+
+## Keyboard Shortcuts Reference
+
+| Key | Calculator Action |
+| :--- | :--- |
+| `0` – `9` | Input number |
+| `.` | Input decimal point |
+| `+` | Addition |
+| `-` | Subtraction |
+| `*` | Multiplication (`×`) |
+| `/` | Division (`÷`) |
+| `Enter` or `=` | Compute result |
+| `Backspace` | Delete last entered digit |
+| `Escape` | Clear all (`C`) |
+| `%` | Percentage calculation |
 
 ---
 
 ## Tech Stack
 
-- **HTML5:** Semantic document markup.
-- **CSS3:** Responsive CSS grid and flexbox layout, custom properties, modern dark theme aesthetics.
-- **JavaScript (ES6+):** Pure vanilla JavaScript without external libraries or frameworks.
+- **HTML5:** Semantic document markup with accessible ARIA labeling.
+- **CSS3:** Modern CSS custom properties, Flexbox & Grid layouts, dark theme aesthetics, zero external frameworks.
+- **JavaScript (ES6+):** Pure vanilla JavaScript without external libraries or build dependencies.
 
 ---
 
@@ -50,3 +73,4 @@ This repository was specifically constructed with authentic sequential Git commi
 - Repository metadata ingestion (name, description, visibility, default branch).
 - Commit tree tracking and chronological timeline verification.
 - Code change diff inspection across incremental project milestones.
+- Validating genuine commit authorship and timestamp sequencing.

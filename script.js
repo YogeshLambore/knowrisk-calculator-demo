@@ -1,11 +1,13 @@
 /**
  * KnowRisk Calculator Demo - Core Logic & Keyboard Integration
+ * Enhanced with input validation, precision rounding, and keyboard feedback.
  */
 
 class Calculator {
   constructor(previousOperandElement, currentOperandElement) {
     this.previousOperandElement = previousOperandElement;
     this.currentOperandElement = currentOperandElement;
+    this.MAX_DIGITS = 14;
     this.clear();
   }
 
@@ -14,14 +16,20 @@ class Calculator {
     this.previousOperand = '';
     this.operation = undefined;
     this.shouldResetScreen = false;
+    this.isErrorState = false;
   }
 
   delete() {
+    if (this.isErrorState) {
+      this.clear();
+      return;
+    }
     if (this.shouldResetScreen) {
       this.clear();
       return;
     }
     if (this.currentOperand === '0') return;
+
     if (this.currentOperand.length === 1 || (this.currentOperand.length === 2 && this.currentOperand.startsWith('-'))) {
       this.currentOperand = '0';
     } else {
@@ -30,11 +38,27 @@ class Calculator {
   }
 
   appendNumber(number) {
+    if (this.isErrorState) {
+      this.clear();
+    }
     if (this.shouldResetScreen) {
       this.currentOperand = '';
       this.shouldResetScreen = false;
     }
-    if (number === '.' && this.currentOperand.includes('.')) return;
+
+    // Decimal validation: prevent duplicate decimal points
+    if (number === '.') {
+      if (this.currentOperand.includes('.')) return;
+      if (this.currentOperand === '' || this.currentOperand === '0') {
+        this.currentOperand = '0.';
+        return;
+      }
+    }
+
+    // Prevent number overflow exceeding display bounds
+    const cleanLength = this.currentOperand.replace(/[-.]/g, '').length;
+    if (cleanLength >= this.MAX_DIGITS) return;
+
     if (this.currentOperand === '0' && number !== '.') {
       this.currentOperand = number.toString();
     } else {
@@ -43,16 +67,29 @@ class Calculator {
   }
 
   chooseOperation(operation) {
+    if (this.isErrorState) return;
+
+    // Allow switching operator if user hasn't typed next operand yet
+    if (this.shouldResetScreen && this.previousOperand !== '') {
+      this.operation = operation;
+      return;
+    }
+
     if (this.currentOperand === '') return;
+
     if (this.previousOperand !== '') {
       this.compute();
+      if (this.isErrorState) return;
     }
+
     this.operation = operation;
     this.previousOperand = this.currentOperand;
     this.shouldResetScreen = true;
   }
 
   compute() {
+    if (this.isErrorState || !this.operation || this.previousOperand === '') return;
+
     let computation;
     const prev = parseFloat(this.previousOperand);
     const current = parseFloat(this.currentOperand);
@@ -73,10 +110,12 @@ class Calculator {
         break;
       case '÷':
       case '/':
+        // Explicit division by zero protection
         if (current === 0) {
-          this.currentOperand = 'Error';
+          this.currentOperand = 'Cannot divide by zero';
           this.previousOperand = '';
           this.operation = undefined;
+          this.isErrorState = true;
           this.shouldResetScreen = true;
           return;
         }
@@ -86,6 +125,9 @@ class Calculator {
         return;
     }
 
+    // Correct floating point precision issues (e.g. 0.1 + 0.2 = 0.3)
+    computation = this.formatPrecision(computation);
+
     this.currentOperand = computation.toString();
     this.operation = undefined;
     this.previousOperand = '';
@@ -93,18 +135,63 @@ class Calculator {
   }
 
   applyPercent() {
+    if (this.isErrorState) return;
     const current = parseFloat(this.currentOperand);
     if (isNaN(current)) return;
-    this.currentOperand = (current / 100).toString();
+    this.currentOperand = this.formatPrecision(current / 100).toString();
+  }
+
+  formatPrecision(num) {
+    if (!isFinite(num)) return num;
+    // Round to 12 decimal places to avoid IEEE 754 precision artifacts
+    return parseFloat(num.toPrecision(12));
+  }
+
+  formatDisplayNumber(numberStr) {
+    if (this.isErrorState) return numberStr;
+    if (!numberStr) return '';
+
+    const stringNumber = numberStr.toString();
+    const [integerDigits, decimalDigits] = stringNumber.split('.');
+    const parsedInteger = parseFloat(integerDigits);
+
+    let integerDisplay = '';
+    if (isNaN(parsedInteger)) {
+      integerDisplay = '';
+    } else {
+      integerDisplay = parsedInteger.toLocaleString('en', { maximumFractionDigits: 0 });
+    }
+
+    if (decimalDigits != null) {
+      return `${integerDisplay}.${decimalDigits}`;
+    } else {
+      return integerDisplay;
+    }
   }
 
   updateDisplay() {
-    this.currentOperandElement.innerText = this.currentOperand;
-    if (this.operation != null && this.previousOperand !== '') {
-      this.previousOperandElement.innerText = `${this.previousOperand} ${this.operation}`;
-    } else {
+    if (this.isErrorState) {
+      this.currentOperandElement.innerText = this.currentOperand;
+      this.currentOperandElement.style.fontSize = '1.35rem';
       this.previousOperandElement.innerText = '';
+    } else {
+      this.currentOperandElement.style.fontSize = '';
+      this.currentOperandElement.innerText = this.formatDisplayNumber(this.currentOperand);
+      if (this.operation != null && this.previousOperand !== '') {
+        this.previousOperandElement.innerText = `${this.formatDisplayNumber(this.previousOperand)} ${this.operation}`;
+      } else {
+        this.previousOperandElement.innerText = '';
+      }
     }
+  }
+}
+
+// Visual button flash for keyboard accessibility
+function flashButton(selector) {
+  const btn = document.querySelector(selector);
+  if (btn) {
+    btn.classList.add('is-pressed');
+    setTimeout(() => btn.classList.remove('is-pressed'), 120);
   }
 }
 
@@ -164,32 +251,45 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isNaN(key) && key !== ' ') {
       calculator.appendNumber(key);
       calculator.updateDisplay();
+      flashButton(`button[data-number="${key}"]`);
     } else if (key === '.') {
       calculator.appendNumber('.');
       calculator.updateDisplay();
-    } else if (key === '+' || key === '-') {
-      calculator.chooseOperation(key);
+      flashButton('button[data-action="decimal"]');
+    } else if (key === '+') {
+      calculator.chooseOperation('+');
       calculator.updateDisplay();
+      flashButton('button[data-action="add"]');
+    } else if (key === '-') {
+      calculator.chooseOperation('-');
+      calculator.updateDisplay();
+      flashButton('button[data-action="subtract"]');
     } else if (key === '*') {
       calculator.chooseOperation('×');
       calculator.updateDisplay();
+      flashButton('button[data-action="multiply"]');
     } else if (key === '/') {
-      event.preventDefault(); // Prevent browser search shortcut
+      event.preventDefault(); // Prevent browser search quick-find
       calculator.chooseOperation('÷');
       calculator.updateDisplay();
+      flashButton('button[data-action="divide"]');
     } else if (key === 'Enter' || key === '=') {
       event.preventDefault();
       calculator.compute();
       calculator.updateDisplay();
+      flashButton('button[data-action="calculate"]');
     } else if (key === 'Backspace') {
       calculator.delete();
       calculator.updateDisplay();
+      flashButton('button[data-action="delete"]');
     } else if (key === 'Escape') {
       calculator.clear();
       calculator.updateDisplay();
+      flashButton('button[data-action="clear"]');
     } else if (key === '%') {
       calculator.applyPercent();
       calculator.updateDisplay();
+      flashButton('button[data-action="percent"]');
     }
   });
 });
